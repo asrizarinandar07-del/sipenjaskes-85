@@ -25,7 +25,8 @@
     }
   </script>
 
-  <!-- SheetJS (Excel Impor & Ekspor) & html2pdf (PDF) -->
+  <!-- Chart.js (Grafik Siswa), SheetJS (Excel Impor & Ekspor) & html2pdf (PDF) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -124,9 +125,9 @@
           <span class="text-orange-700 font-bold text-xs mb-1">Kepala Sekolah</span>
           <span id="card-kepsek-status" class="text-[11px] font-semibold text-orange-900 line-clamp-1">Belum Diisi</span>
         </button>
-        <button onclick="enterApp('kelas')" class="p-3 rounded-2xl bg-sky-50 hover:bg-sky-100 border border-sky-200 transition flex flex-col items-center justify-center">
-          <span class="text-sky-700 font-bold text-xs mb-1">Guru PJOK</span>
-          <span id="card-guru-status" class="text-[11px] font-semibold text-sky-900 line-clamp-1">M. Syafi'i K.</span>
+        <button onclick="enterApp('roster')" class="p-3 rounded-2xl bg-sky-50 hover:bg-sky-100 border border-sky-200 transition flex flex-col items-center justify-center">
+          <span class="text-sky-700 font-bold text-xs mb-1">Roster PJOK</span>
+          <span id="card-roster-status" class="text-[11px] font-semibold text-sky-900 line-clamp-1">Atur Jadwal</span>
         </button>
       </div>
     </div>
@@ -167,13 +168,16 @@
       <!-- Bar Navigasi Tab -->
       <nav class="mt-4 pt-3 border-t border-white/20 flex flex-wrap gap-1.5">
         <button id="nav-beranda" onclick="switchTab('beranda')" class="nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-emerald-700 shadow-sm transition">
-          🏠 Dashboard
+          🏠 Dashboard &amp; Grafik
         </button>
         <button id="nav-kelas" onclick="switchTab('kelas')" class="nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-white/15 hover:bg-white/25 text-white transition">
-          🏫 Data Sekolah &amp; Impor Excel
+          🏫 Sekolah &amp; Impor Excel
+        </button>
+        <button id="nav-roster" onclick="switchTab('roster')" class="nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-white/15 hover:bg-white/25 text-white transition">
+          📅 Roster Mengajar
         </button>
         <button id="nav-absensi" onclick="switchTab('absensi')" class="nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-white/15 hover:bg-white/25 text-white transition">
-          📋 Absensi PJOK
+          📋 Absensi Harian
         </button>
         <button id="nav-penilaian" onclick="switchTab('penilaian')" class="nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-white/15 hover:bg-white/25 text-white transition">
           🏅 Penilaian Kurmer
@@ -184,50 +188,89 @@
       </nav>
     </header>
 
-    <!-- ==================== TAB 1: BERANDA / DASHBOARD ==================== -->
+    <!-- ==================== TAB 1: BERANDA / DASHBOARD & GRAFIK ==================== -->
     <section id="tab-beranda" class="tab-content space-y-5">
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
           <p class="text-xs font-bold text-slate-400 uppercase">Total Siswa</p>
           <p id="stat-total-siswa" class="text-2xl font-extrabold text-slate-800 mt-1">0</p>
+          <p id="stat-jk-detail" class="text-[11px] font-semibold text-slate-500 mt-0.5">L: 0 • P: 0</p>
         </div>
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
           <p class="text-xs font-bold text-slate-400 uppercase">Rombel Terisi</p>
           <p id="stat-total-kelas" class="text-2xl font-extrabold text-emerald-600 mt-1">0 Rombel</p>
+          <p class="text-[11px] font-semibold text-slate-500 mt-0.5">Paralel 1-A s.d. 6-C</p>
         </div>
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-          <p class="text-xs font-bold text-slate-400 uppercase">Data Nilai Tersimpan</p>
+          <p class="text-xs font-bold text-slate-400 uppercase">Jadwal Roster</p>
+          <p id="stat-total-roster" class="text-2xl font-extrabold text-sky-600 mt-1">0 Jam</p>
+          <p class="text-[11px] font-semibold text-slate-500 mt-0.5">Senin s.d. Sabtu</p>
+        </div>
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-bold text-slate-400 uppercase">Data Nilai Rapor</p>
           <p id="stat-total-nilai" class="text-2xl font-extrabold text-orange-600 mt-1">0</p>
-        </div>
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-          <p class="text-xs font-bold text-slate-400 uppercase">Semester Aktif</p>
-          <p id="stat-semester" class="text-lg font-extrabold text-sky-600 mt-1">Ganjil</p>
+          <p id="stat-semester" class="text-[11px] font-semibold text-slate-500 mt-0.5">Semester Ganjil</p>
         </div>
       </div>
 
+      <!-- Grafik Jumlah Siswa per Rombel Paralel -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-base font-extrabold text-slate-800">📊 Grafik Jumlah Siswa per Rombel Paralel</h2>
+              <p class="text-xs text-slate-500">Perbandingan siswa Laki-laki (L) dan Perempuan (P) berdasarkan data yang terinput.</p>
+            </div>
+            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Real-time Cloud
+            </span>
+          </div>
+          <div class="relative h-64 w-full">
+            <canvas id="chart-siswa-rombel"></canvas>
+          </div>
+        </div>
+
+        <!-- Jadwal Mengajar Hari Ini (Quick Widget) -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-base font-extrabold text-slate-800">📅 Roster Mengajar</h2>
+              <button onclick="switchTab('roster')" class="text-xs font-bold text-emerald-600 hover:underline">+ Atur</button>
+            </div>
+            <p id="today-day-label" class="text-xs font-semibold text-slate-500 mb-3">Jadwal Terdaftar:</p>
+            <div id="dashboard-roster-list" class="space-y-2 max-h-52 overflow-y-auto pr-1">
+              <p class="text-xs text-slate-400 py-6 text-center">Belum ada jadwal roster. Klik <b>+ Atur</b> untuk menambahkan.</p>
+            </div>
+          </div>
+          <button onclick="switchTab('absensi')" class="mt-4 w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition">
+            📋 Isi Absensi Harian Sekarang →
+          </button>
+        </div>
+      </div>
+
+      <!-- Menu Cepat -->
       <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-        <h2 class="text-lg font-extrabold text-slate-800 mb-2">Menu Cepat Administrasi PJOK</h2>
-        <p class="text-sm text-slate-500 mb-4">Mendukung rombel paralel (Kelas 1-A s.d. 6-C). Seluruh perubahan otomatis tersinkronisasi secara real-time ke Cloud Firestore SD Inpres 105285.</p>
+        <h2 class="text-base font-extrabold text-slate-800 mb-3">Menu Cepat Administrasi PJOK</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <button onclick="switchTab('kelas')" class="p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-left transition">
             <span class="text-2xl">🏫</span>
             <h3 class="font-bold text-emerald-900 mt-2">1. Sekolah &amp; Impor Excel</h3>
-            <p class="text-xs text-emerald-700 mt-1">Isi identitas sekolah dan unggah/unduh format Excel kolektif per rombel paralel.</p>
+            <p class="text-xs text-emerald-700 mt-1">Isi identitas sekolah dan unggah/unduh format Excel kolektif per rombel.</p>
+          </button>
+          <button onclick="switchTab('roster')" class="p-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-left transition">
+            <span class="text-2xl">📅</span>
+            <h3 class="font-bold text-indigo-900 mt-2">2. Pengaturan Roster</h3>
+            <p class="text-xs text-indigo-700 mt-1">Atur hari mengajar (Senin–Sabtu), jam pelajaran, dan rombel kelas.</p>
           </button>
           <button onclick="switchTab('absensi')" class="p-4 rounded-2xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-left transition">
             <span class="text-2xl">📋</span>
-            <h3 class="font-bold text-sky-900 mt-2">2. Rekap Absensi</h3>
-            <p class="text-xs text-sky-700 mt-1">Catat kehadiran Hadir (H), Sakit (S), Izin (I), dan Alfa (A) per rombel.</p>
+            <h3 class="font-bold text-sky-900 mt-2">3. Absensi Harian</h3>
+            <p class="text-xs text-sky-700 mt-1">Input kehadiran harian sesuai jadwal roster &amp; otomatis terakumulasi.</p>
           </button>
           <button onclick="switchTab('penilaian')" class="p-4 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-left transition">
             <span class="text-2xl">🏅</span>
-            <h3 class="font-bold text-orange-900 mt-2">3. Penilaian Kurikulum Merdeka</h3>
-            <p class="text-xs text-orange-700 mt-1">Input nilai Formatif, Sumatif Lingkup Materi, dan Sumatif Akhir.</p>
-          </button>
-          <button onclick="switchTab('laporan')" class="p-4 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-left transition">
-            <span class="text-2xl">🖨️</span>
-            <h3 class="font-bold text-purple-900 mt-2">4. Cetak Laporan &amp; Excel</h3>
-            <p class="text-xs text-purple-700 mt-1">Unduh rekap resmi per rombel lengkap dengan kop sekolah dan tanda tangan.</p>
+            <h3 class="font-bold text-orange-900 mt-2">4. Penilaian &amp; Cetak</h3>
+            <p class="text-xs text-orange-700 mt-1">Input nilai Formatif/Sumatif serta cetak rekap resmi &amp; Excel.</p>
           </button>
         </div>
       </div>
@@ -313,7 +356,7 @@
               📤 Impor Excel Rombel Ini
               <input type="file" accept=".xlsx,.xls,.csv" onchange="importClassExcel(event, 'select-kelas-master')" class="hidden" />
             </label>
-            <button onclick="clearCurrentClassStudents()" class="px-3 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold transition" title="Kosongkan daftar siswa di rombel ini">
+            <button onclick="clearCurrentClassStudents()" class="px-3 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold transition">
               🗑️ Reset Rombel
             </button>
           </div>
@@ -353,31 +396,106 @@
       </div>
     </section>
 
-    <!-- ==================== TAB 3: ABSENSI PJOK ==================== -->
-    <section id="tab-absensi" class="tab-content hidden space-y-5">
+    <!-- ==================== TAB ROSTER MENGAJAR ==================== -->
+    <section id="tab-roster" class="tab-content hidden space-y-5">
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <h2 class="text-xl font-extrabold text-slate-800">Rekap Kehadiran / Absensi PJOK</h2>
+        <h2 class="text-xl font-extrabold text-slate-800">Pengaturan Roster Mengajar PJOK</h2>
         <button onclick="switchTab('beranda')" class="px-3.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-xs font-bold text-slate-700 transition">
           ← Kembali ke Dashboard
         </button>
       </div>
 
       <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <label class="text-xs font-bold text-slate-600">Rombel:</label>
-            <select id="select-kelas-absensi" onchange="syncClassSelectors(this.value)" class="rombel-select px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold"></select>
+        <h3 class="font-bold text-indigo-700 text-base border-b pb-2">Tambah Jadwal Pelajaran PJOK</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Hari Mengajar</label>
+            <select id="roster-hari" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-bold">
+              <option value="Senin">Senin</option>
+              <option value="Selasa">Selasa</option>
+              <option value="Rabu">Rabu</option>
+              <option value="Kamis">Kamis</option>
+              <option value="Jumat">Jumat</option>
+              <option value="Sabtu">Sabtu</option>
+            </select>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button onclick="downloadClassExcelTemplate('select-kelas-absensi')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition">
-              📥 Unduh Excel Rombel
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Waktu / Jam Pelajaran</label>
+            <input id="roster-waktu" type="text" placeholder="Contoh: 07.30 - 09.15 (Jam 1-3)" class="w-full px-3 py-2.5 rounded-xl border border-slate-300" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Rombel Kelas</label>
+            <select id="roster-kelas" class="rombel-select w-full px-3 py-2.5 rounded-xl border border-slate-300 font-bold"></select>
+          </div>
+          <div class="flex items-end">
+            <button onclick="addRosterItem()" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow transition">
+              + Simpan Jadwal
             </button>
-            <label class="cursor-pointer px-3 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs transition">
-              📤 Impor Excel
-              <input type="file" accept=".xlsx,.xls,.csv" onchange="importClassExcel(event, 'select-kelas-absensi')" class="hidden" />
-            </label>
-            <button onclick="saveAllToCloud()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow transition">
-              💾 Simpan Rekap Absensi
+          </div>
+        </div>
+
+        <div class="overflow-x-auto pt-2">
+          <table class="w-full text-sm text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 border-b">
+                <th class="p-3 rounded-tl-xl">Hari</th>
+                <th class="p-3">Waktu / Jam Pelajaran</th>
+                <th class="p-3">Rombel Kelas</th>
+                <th class="p-3">Jumlah Siswa</th>
+                <th class="p-3 rounded-tr-xl text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-roster" class="divide-y divide-slate-200">
+              <tr><td colspan="5" class="p-6 text-center text-slate-400">Belum ada pengaturan roster mengajar.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: ABSENSI HARIAN SESUAI ROSTER ==================== -->
+    <section id="tab-absensi" class="tab-content hidden space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-xl font-extrabold text-slate-800">Input Absensi Harian per Rombel Sesuai Jadwal</h2>
+        <button onclick="switchTab('beranda')" class="px-3.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-xs font-bold text-slate-700 transition">
+          ← Kembali ke Dashboard
+        </button>
+      </div>
+
+      <!-- Pintasan Jadwal Sesuai Hari/Roster -->
+      <div class="bg-indigo-50 border border-indigo-200 rounded-3xl p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <p class="text-xs font-extrabold text-indigo-900 uppercase">📅 Pilih Cepat Berdasarkan Roster Mengajar:</p>
+          <button onclick="switchTab('roster')" class="text-xs font-bold text-indigo-700 hover:underline">Kelola Roster →</button>
+        </div>
+        <div id="absensi-roster-pills" class="flex flex-wrap gap-2">
+          <span class="text-xs text-indigo-600">Belum ada roster diatur. Anda tetap bisa memilih tanggal dan rombel di bawah.</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+          <div class="flex flex-wrap items-center gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase">Tanggal Pertemuan</label>
+              <input id="absensi-tanggal" type="date" onchange="renderAbsensiTable()" class="px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold bg-sky-50 text-sky-900" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase">Hari &amp; Jam Jadwal</label>
+              <input id="absensi-jam-info" type="text" readonly class="px-3 py-2 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 w-48" value="-" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase">Rombel Kelas</label>
+              <select id="select-kelas-absensi" onchange="syncClassSelectors(this.value)" class="rombel-select px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold"></select>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="markAllHadirToday()" class="px-3.5 py-2 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold text-xs transition">
+              ✅ Tandai Semua Hadir (H)
+            </button>
+            <button onclick="saveDailyAttendance()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow transition">
+              💾 Simpan Absensi Tanggal Ini
             </button>
           </div>
         </div>
@@ -388,10 +506,8 @@
               <tr class="bg-slate-100 text-slate-700 border-b">
                 <th class="p-3">No</th>
                 <th class="p-3">Nama Siswa</th>
-                <th class="p-3 text-center">Hadir (H)</th>
-                <th class="p-3 text-center">Sakit (S)</th>
-                <th class="p-3 text-center">Izin (I)</th>
-                <th class="p-3 text-center">Alfa (A)</th>
+                <th class="p-3 text-center">Status Kehadiran Hari Ini</th>
+                <th class="p-3 text-center bg-slate-200/60">Akumulasi Semester (H / S / I / A)</th>
               </tr>
             </thead>
             <tbody id="tbody-absensi" class="divide-y divide-slate-200"></tbody>
@@ -529,7 +645,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // KONFIGURASI FIREBASE SIPENJASKES-85 (Tanpa Firebase Auth agar bebas error apiKey Auth)
+    // KONFIGURASI FIREBASE SIPENJASKES-85
     const firebaseConfig = {
       apiKey: "AIzaSyCV8MTbEWBoTHEYmIpZFfb7UkpXjovE-U",
       authDomain: "sipenjaskes-85.firebaseapp.com",
@@ -540,15 +656,8 @@
       measurementId: "G-PMGR8YZFCV"
     };
 
-    // Daftar Rombel Paralel Lengkap (Kelas 1-A s.d. 6-C)
-    const ROMBEL_LIST = [
-      "Kelas 1-A", "Kelas 1-B", "Kelas 1-C",
-      "Kelas 2-A", "Kelas 2-B", "Kelas 2-C",
-      "Kelas 3-A", "Kelas 3-B", "Kelas 3-C",
-      "Kelas 4-A", "Kelas 4-B", "Kelas 4-C",
-      "Kelas 5-A", "Kelas 5-B", "Kelas 5-C",
-      "Kelas 6-A", "Kelas 6-B", "Kelas 6-C"
-    ];
+    const HARI_ORDER = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const HARI_INDONESIA = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
     function populateRombelDropdowns() {
       const optionsHtml = [1, 2, 3, 4, 5, 6].map((tingkat) => `
@@ -566,6 +675,11 @@
     }
     populateRombelDropdowns();
 
+    // Set tanggal hari ini secara default pada input absensi harian
+    const todayStr = new Date().toISOString().split("T")[0];
+    const absTanggalEl = document.getElementById("absensi-tanggal");
+    if (absTanggalEl) absTanggalEl.value = todayStr;
+
     // State Aplikasi Bersih Tanpa Data Dummy
     let appState = {
       school: {
@@ -578,14 +692,21 @@
         namaGuru: "Muhammad Syafi'i Khalifi, S.Pd",
         nipGuru: ""
       },
-      students: []
+      students: [],      // { id, kelas, nisn, nama, jk, h, s, i, a, baseH, baseS, baseI, baseA, formatif, sumatifLm, sumatifAkhir }
+      roster: [],        // { id, hari, waktu, kelas }
+      dailyLogs: {}      // { "2026-11-17__Kelas 6-A": { [studentId]: "H" | "S" | "I" | "A" } }
     };
 
-    // Muat cadangan lokal terlebih dahulu agar instan
     const localSaved = localStorage.getItem("sipenjaskes85_state");
     if (localSaved) {
       try {
-        appState = { ...appState, ...JSON.parse(localSaved) };
+        const parsed = JSON.parse(localSaved);
+        appState = {
+          ...appState,
+          ...parsed,
+          roster: Array.isArray(parsed.roster) ? parsed.roster : [],
+          dailyLogs: parsed.dailyLogs && typeof parsed.dailyLogs === "object" ? parsed.dailyLogs : {}
+        };
       } catch (e) {
         console.warn("Membaca state baru:", e);
       }
@@ -605,7 +726,9 @@
           const remoteData = snapshot.data();
           appState = {
             school: { ...appState.school, ...(remoteData.school || {}) },
-            students: Array.isArray(remoteData.students) ? remoteData.students : []
+            students: Array.isArray(remoteData.students) ? remoteData.students : [],
+            roster: Array.isArray(remoteData.roster) ? remoteData.roster : [],
+            dailyLogs: remoteData.dailyLogs && typeof remoteData.dailyLogs === "object" ? remoteData.dailyLogs : {}
           };
           localStorage.setItem("sipenjaskes85_state", JSON.stringify(appState));
           refreshAllUI();
@@ -637,7 +760,7 @@
       setTimeout(() => toast.classList.add("hidden"), 3000);
     };
 
-    // FUNGSI NAVIGASI AMAN (ANTI ERROR NULL CLASSLIST)
+    // FUNGSI NAVIGASI AMAN
     window.enterApp = function(targetTab = "beranda") {
       const splash = document.getElementById("splash-screen");
       const mainApp = document.getElementById("main-app");
@@ -654,16 +777,12 @@
     window.showSplash = function() {
       const splash = document.getElementById("splash-screen");
       const mainApp = document.getElementById("main-app");
-      if (splash) {
-        splash.classList.remove("hidden", "splash-exit");
-      }
-      if (mainApp) {
-        mainApp.classList.add("hidden");
-      }
+      if (splash) splash.classList.remove("hidden", "splash-exit");
+      if (mainApp) mainApp.classList.add("hidden");
     };
 
     window.switchTab = function(tabName) {
-      const tabs = ["beranda", "kelas", "absensi", "penilaian", "laporan"];
+      const tabs = ["beranda", "kelas", "roster", "absensi", "penilaian", "laporan"];
       tabs.forEach((t) => {
         const panel = document.getElementById(`tab-${t}`);
         const btn = document.getElementById(`nav-${t}`);
@@ -691,6 +810,7 @@
     };
 
     window.saveAllToCloud = async function() {
+      recalculateAttendanceTotals();
       localStorage.setItem("sipenjaskes85_state", JSON.stringify(appState));
       refreshAllUI();
       if (docRef) {
@@ -721,6 +841,220 @@
         nipGuru: document.getElementById("inp-nip-guru")?.value || ""
       };
       window.saveAllToCloud();
+    };
+
+    // ==================== ROSTER MENGAJAR ====================
+    window.addRosterItem = function() {
+      const hari = document.getElementById("roster-hari")?.value || "Senin";
+      const waktu = (document.getElementById("roster-waktu")?.value || "").trim();
+      const kelas = document.getElementById("roster-kelas")?.value || "Kelas 6-A";
+
+      if (!waktu) {
+        window.showToast("⚠️ Isi waktu/jam pelajaran terlebih dahulu!");
+        return;
+      }
+
+      appState.roster.push({
+        id: "RST-" + Date.now(),
+        hari,
+        waktu,
+        kelas
+      });
+
+      document.getElementById("roster-waktu").value = "";
+      window.saveAllToCloud();
+    };
+
+    window.deleteRosterItem = function(id) {
+      appState.roster = appState.roster.filter((r) => r.id !== id);
+      window.saveAllToCloud();
+    };
+
+    window.selectRosterForAbsensi = function(hari, waktu, kelas) {
+      window.syncClassSelectors(kelas);
+      window.switchTab("absensi");
+      const infoEl = document.getElementById("absensi-jam-info");
+      if (infoEl) infoEl.value = `${hari} • ${waktu}`;
+      window.showToast(`📋 Absensi ${kelas} (${hari}, ${waktu}) siap diisi`);
+    };
+
+    function renderRosterUI() {
+      const sortedRoster = [...appState.roster].sort((a, b) => HARI_ORDER.indexOf(a.hari) - HARI_ORDER.indexOf(b.hari));
+
+      // 1. Tabel di Tab Roster
+      const tbody = document.getElementById("tbody-roster");
+      if (tbody) {
+        if (sortedRoster.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Belum ada jadwal roster. Tambahkan hari, waktu, dan kelas di atas.</td></tr>`;
+        } else {
+          tbody.innerHTML = sortedRoster.map((r) => {
+            const jml = appState.students.filter((s) => s.kelas === r.kelas).length;
+            return `
+              <tr class="hover:bg-slate-50">
+                <td class="p-3 font-extrabold text-indigo-700">${r.hari}</td>
+                <td class="p-3 font-semibold">${r.waktu}</td>
+                <td class="p-3"><span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-xs">${r.kelas}</span></td>
+                <td class="p-3 text-slate-600">${jml} Siswa</td>
+                <td class="p-3 text-right space-x-1">
+                  <button onclick="selectRosterForAbsensi('${r.hari}','${r.waktu.replace(/'/g, "\\'")}','${r.kelas}')" class="px-2.5 py-1 rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-bold">Isi Absensi</button>
+                  <button onclick="deleteRosterItem('${r.id}')" class="px-2.5 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold">Hapus</button>
+                </td>
+              </tr>
+            `;
+          }).join("");
+        }
+      }
+
+      // 2. Widget Roster di Dashboard
+      const dashList = document.getElementById("dashboard-roster-list");
+      if (dashList) {
+        if (sortedRoster.length === 0) {
+          dashList.innerHTML = `<p class="text-xs text-slate-400 py-6 text-center">Belum ada jadwal roster. Klik <b>+ Atur</b> untuk menambahkan.</p>`;
+        } else {
+          dashList.innerHTML = sortedRoster.map((r) => `
+            <div onclick="selectRosterForAbsensi('${r.hari}','${r.waktu.replace(/'/g, "\\'")}','${r.kelas}')" class="cursor-pointer p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 flex items-center justify-between transition">
+              <div>
+                <p class="text-xs font-extrabold text-slate-800">${r.hari} • <span class="text-emerald-700">${r.kelas}</span></p>
+                <p class="text-[11px] text-slate-500">${r.waktu}</p>
+              </div>
+              <span class="text-[11px] font-bold text-indigo-600">Absen →</span>
+            </div>
+          `).join("");
+        }
+      }
+
+      // 3. Pintasan Pills di Tab Absensi Harian
+      const pillsEl = document.getElementById("absensi-roster-pills");
+      if (pillsEl) {
+        if (sortedRoster.length === 0) {
+          pillsEl.innerHTML = `<span class="text-xs text-indigo-700">Belum ada roster diatur. Silakan pilih Tanggal dan Rombel di bawah, atau atur jadwal di menu <b>Roster Mengajar</b>.</span>`;
+        } else {
+          pillsEl.innerHTML = sortedRoster.map((r) => `
+            <button onclick="selectRosterForAbsensi('${r.hari}','${r.waktu.replace(/'/g, "\\'")}','${r.kelas}')" class="px-3 py-1.5 rounded-xl bg-white hover:bg-indigo-600 hover:text-white text-indigo-900 border border-indigo-200 text-xs font-bold shadow-sm transition">
+              📅 ${r.hari} (${r.waktu}) • ${r.kelas}
+            </button>
+          `).join("");
+        }
+      }
+    }
+
+    // ==================== ABSENSI HARIAN & AKUMULASI ====================
+    function recalculateAttendanceTotals() {
+      // Hitung akumulasi dari dailyLogs + nilai dasar impor Excel (baseH/S/I/A)
+      appState.students.forEach((st) => {
+        let logH = 0, logS = 0, logI = 0, logA = 0;
+        Object.entries(appState.dailyLogs || {}).forEach(([key, records]) => {
+          const [, rombel] = key.split("__");
+          if (rombel === st.kelas && records && records[st.id]) {
+            const status = records[st.id];
+            if (status === "H") logH++;
+            else if (status === "S") logS++;
+            else if (status === "I") logI++;
+            else if (status === "A") logA++;
+          }
+        });
+        st.h = (Number(st.baseH) || 0) + logH;
+        st.s = (Number(st.baseS) || 0) + logS;
+        st.i = (Number(st.baseI) || 0) + logI;
+        st.a = (Number(st.baseA) || 0) + logA;
+      });
+    }
+
+    window.setDailyStatus = function(studentId, status) {
+      const tanggal = document.getElementById("absensi-tanggal")?.value || todayStr;
+      const kelas = document.getElementById("select-kelas-absensi")?.value || "Kelas 6-A";
+      const key = `${tanggal}__${kelas}`;
+
+      if (!appState.dailyLogs[key]) appState.dailyLogs[key] = {};
+      appState.dailyLogs[key][studentId] = status;
+
+      recalculateAttendanceTotals();
+      localStorage.setItem("sipenjaskes85_state", JSON.stringify(appState));
+      renderAbsensiTable();
+    };
+
+    window.markAllHadirToday = function() {
+      const tanggal = document.getElementById("absensi-tanggal")?.value || todayStr;
+      const kelas = document.getElementById("select-kelas-absensi")?.value || "Kelas 6-A";
+      const list = appState.students.filter((s) => s.kelas === kelas);
+
+      if (list.length === 0) {
+        window.showToast("⚠️ Belum ada siswa di rombel ini.");
+        return;
+      }
+
+      const key = `${tanggal}__${kelas}`;
+      if (!appState.dailyLogs[key]) appState.dailyLogs[key] = {};
+      list.forEach((s) => {
+        appState.dailyLogs[key][s.id] = "H";
+      });
+
+      recalculateAttendanceTotals();
+      renderAbsensiTable();
+      window.showToast(`✅ Semua (${list.length}) siswa ${kelas} ditandai Hadir pada ${tanggal}`);
+    };
+
+    window.saveDailyAttendance = function() {
+      window.saveAllToCloud();
+    };
+
+    window.renderAbsensiTable = function() {
+      const kelas = document.getElementById("select-kelas-absensi")?.value || "Kelas 6-A";
+      const tanggal = document.getElementById("absensi-tanggal")?.value || todayStr;
+      const tbody = document.getElementById("tbody-absensi");
+      if (!tbody) return;
+
+      // Deteksi otomatis nama hari dari tanggal dan cocokkan dengan roster
+      if (tanggal) {
+        const d = new Date(tanggal + "T00:00:00");
+        const namaHari = HARI_INDONESIA[d.getDay()] || "";
+        const matchRoster = appState.roster.find((r) => r.hari === namaHari && r.kelas === kelas);
+        const infoEl = document.getElementById("absensi-jam-info");
+        if (infoEl) {
+          infoEl.value = matchRoster ? `${namaHari} • ${matchRoster.waktu}` : `${namaHari} (Non-Roster)`;
+        }
+      }
+
+      const list = appState.students.filter((s) => s.kelas === kelas);
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">Belum ada siswa di ${kelas}. Impor Excel atau tambahkan siswa di menu <b>Sekolah & Impor Excel</b>.</td></tr>`;
+        return;
+      }
+
+      const key = `${tanggal}__${kelas}`;
+      const dayRecords = appState.dailyLogs[key] || {};
+
+      tbody.innerHTML = list.map((s, idx) => {
+        const st = dayRecords[s.id] || "";
+        const btnClass = (code, activeColor) =>
+          st === code
+            ? `${activeColor} text-white font-extrabold shadow-sm scale-105`
+            : "bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold";
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="p-3 font-semibold">${idx + 1}</td>
+            <td class="p-3">
+              <p class="font-bold text-slate-800">${s.nama}</p>
+              <p class="text-[11px] text-slate-400">NISN: ${s.nisn} • ${s.jk}</p>
+            </td>
+            <td class="p-3">
+              <div class="flex items-center justify-center gap-1.5">
+                <button onclick="setDailyStatus('${s.id}','H')" class="w-9 h-9 rounded-xl text-xs transition ${btnClass('H', 'bg-emerald-600')}">H</button>
+                <button onclick="setDailyStatus('${s.id}','S')" class="w-9 h-9 rounded-xl text-xs transition ${btnClass('S', 'bg-amber-500')}">S</button>
+                <button onclick="setDailyStatus('${s.id}','I')" class="w-9 h-9 rounded-xl text-xs transition ${btnClass('I', 'bg-sky-600')}">I</button>
+                <button onclick="setDailyStatus('${s.id}','A')" class="w-9 h-9 rounded-xl text-xs transition ${btnClass('A', 'bg-rose-600')}">A</button>
+              </div>
+            </td>
+            <td class="p-3 text-center bg-slate-50/80 text-xs font-bold">
+              <span class="text-emerald-700">H:${s.h || 0}</span> •
+              <span class="text-amber-600">S:${s.s || 0}</span> •
+              <span class="text-sky-600">I:${s.i || 0}</span> •
+              <span class="text-rose-600">A:${s.a || 0}</span>
+            </td>
+          </tr>
+        `;
+      }).join("");
     };
 
     // ==================== UNDUH TEMPLATE & IMPOR EXCEL KOLEKTIF PER ROMBEL PARALEL ====================
@@ -803,16 +1137,19 @@
               row.JK || row["L/P"] || row.Jenis_Kelamin || row.jk || "L"
             ).trim().toUpperCase().startsWith("P") ? "P" : "L";
 
+            const baseH = Number(row.Hadir ?? row.H ?? row.h ?? 0) || 0;
+            const baseS = Number(row.Sakit ?? row.S ?? row.s ?? 0) || 0;
+            const baseI = Number(row.Izin ?? row.I ?? row.i ?? 0) || 0;
+            const baseA = Number(row.Alfa ?? row.A ?? row.a ?? 0) || 0;
+
             importedStudents.push({
               id: `STD-${Date.now()}-${index}`,
               kelas: targetKelas,
               nisn: rawNisn,
               nama: rawNama,
               jk: rawJk,
-              h: Number(row.Hadir ?? row.H ?? row.h ?? 0) || 0,
-              s: Number(row.Sakit ?? row.S ?? row.s ?? 0) || 0,
-              i: Number(row.Izin ?? row.I ?? row.i ?? 0) || 0,
-              a: Number(row.Alfa ?? row.A ?? row.a ?? 0) || 0,
+              baseH, baseS, baseI, baseA,
+              h: baseH, s: baseS, i: baseI, a: baseA,
               formatif: Number(row.Formatif ?? row.formatif ?? 0) || 0,
               sumatifLm: Number(row.Sumatif_LM ?? row["Sumatif LM"] ?? row.sumatifLm ?? 0) || 0,
               sumatifAkhir: Number(row.Sumatif_Akhir ?? row["Sumatif Akhir"] ?? row.sumatifAkhir ?? 0) || 0
@@ -825,7 +1162,6 @@
             return;
           }
 
-          // Perbarui siswa khusus pada rombel paralel terpilih, rombel lain tetap aman
           const otherClassesStudents = appState.students.filter((s) => s.kelas !== targetKelas);
           appState.students = [...otherClassesStudents, ...importedStudents];
 
@@ -871,6 +1207,7 @@
         nisn: nisn || "-",
         nama,
         jk,
+        baseH: 0, baseS: 0, baseI: 0, baseA: 0,
         h: 0, s: 0, i: 0, a: 0,
         formatif: 0,
         sumatifLm: 0,
@@ -937,29 +1274,6 @@
       `).join("");
     };
 
-    window.renderAbsensiTable = function() {
-      const kelas = document.getElementById("select-kelas-absensi")?.value || "Kelas 6-A";
-      const tbody = document.getElementById("tbody-absensi");
-      if (!tbody) return;
-
-      const list = appState.students.filter((s) => s.kelas === kelas);
-      if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Belum ada siswa di ${kelas}. Impor Excel atau tambahkan siswa di menu Data Sekolah.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = list.map((s, idx) => `
-        <tr>
-          <td class="p-3 font-semibold">${idx + 1}</td>
-          <td class="p-3 font-bold">${s.nama}</td>
-          <td class="p-2 text-center"><input type="number" min="0" value="${s.h || 0}" onchange="updateStudentField('${s.id}','h',this.value)" class="w-16 text-center p-1.5 border rounded-lg font-bold text-emerald-700"/></td>
-          <td class="p-2 text-center"><input type="number" min="0" value="${s.s || 0}" onchange="updateStudentField('${s.id}','s',this.value)" class="w-16 text-center p-1.5 border rounded-lg"/></td>
-          <td class="p-2 text-center"><input type="number" min="0" value="${s.i || 0}" onchange="updateStudentField('${s.id}','i',this.value)" class="w-16 text-center p-1.5 border rounded-lg"/></td>
-          <td class="p-2 text-center"><input type="number" min="0" value="${s.a || 0}" onchange="updateStudentField('${s.id}','a',this.value)" class="w-16 text-center p-1.5 border rounded-lg text-rose-600 font-bold"/></td>
-        </tr>
-      `).join("");
-    };
-
     window.renderNilaiTable = function() {
       const kelas = document.getElementById("select-kelas-nilai")?.value || "Kelas 6-A";
       const tbody = document.getElementById("tbody-nilai");
@@ -967,7 +1281,7 @@
 
       const list = appState.students.filter((s) => s.kelas === kelas);
       if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Belum ada siswa di ${kelas}. Impor Excel atau tambahkan siswa di menu Data Sekolah.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Belum ada siswa di ${kelas}. Impor Excel atau tambahkan siswa di menu Sekolah & Impor Excel.</td></tr>`;
         return;
       }
 
@@ -1063,7 +1377,63 @@
       }).from(element).save();
     };
 
+    // ==================== GRAFIK JUMLAH SISWA (CHART.JS) ====================
+    let siswaChartInstance = null;
+    function renderStudentChart() {
+      const canvas = document.getElementById("chart-siswa-rombel");
+      if (!canvas || typeof Chart === "undefined") return;
+
+      const rombelMap = {};
+      appState.students.forEach((s) => {
+        if (!rombelMap[s.kelas]) rombelMap[s.kelas] = { L: 0, P: 0 };
+        if (s.jk === "P") rombelMap[s.kelas].P++;
+        else rombelMap[s.kelas].L++;
+      });
+
+      const labels = Object.keys(rombelMap).sort();
+      const displayLabels = labels.length > 0 ? labels : ["Kelas 1-A", "Kelas 2-A", "Kelas 3-A", "Kelas 4-A", "Kelas 5-A", "Kelas 6-A"];
+      const dataL = displayLabels.map((k) => (rombelMap[k] ? rombelMap[k].L : 0));
+      const dataP = displayLabels.map((k) => (rombelMap[k] ? rombelMap[k].P : 0));
+
+      if (siswaChartInstance) {
+        siswaChartInstance.destroy();
+      }
+
+      siswaChartInstance = new Chart(canvas, {
+        type: "bar",
+        data: {
+          labels: displayLabels,
+          datasets: [
+            {
+              label: "Laki-laki (L)",
+              data: dataL,
+              backgroundColor: "#10b981",
+              borderRadius: 6
+            },
+            {
+              label: "Perempuan (P)",
+              data: dataP,
+              backgroundColor: "#f97316",
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "top", labels: { font: { family: "Plus Jakarta Sans", weight: "bold", size: 11 } } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } },
+            x: { ticks: { font: { family: "Plus Jakarta Sans", weight: "bold", size: 11 } } }
+          }
+        }
+      });
+    }
+
     function refreshAllUI() {
+      recalculateAttendanceTotals();
       const sc = appState.school;
       if (document.getElementById("inp-nama-sekolah")) {
         document.getElementById("inp-nama-sekolah").value = sc.namaSekolah || "";
@@ -1077,14 +1447,21 @@
       }
 
       const activeRombelCount = new Set(appState.students.map((s) => s.kelas)).size;
+      const countL = appState.students.filter((s) => s.jk !== "P").length;
+      const countP = appState.students.filter((s) => s.jk === "P").length;
 
       document.getElementById("card-kepsek-status").textContent = sc.namaKepsek ? sc.namaKepsek : "Belum Diisi";
+      document.getElementById("card-roster-status").textContent = appState.roster.length > 0 ? `${appState.roster.length} Jadwal` : "Atur Jadwal";
       document.getElementById("header-school-badge").textContent = `● ${sc.namaSekolah || "SD Inpres 105285"} • TA ${sc.tahunAjaran}`;
       document.getElementById("stat-total-siswa").textContent = appState.students.length;
+      document.getElementById("stat-jk-detail").textContent = `L: ${countL} • P: ${countP}`;
       document.getElementById("stat-total-kelas").textContent = `${activeRombelCount} Rombel`;
+      document.getElementById("stat-total-roster").textContent = `${appState.roster.length} Jadwal`;
       document.getElementById("stat-total-nilai").textContent = appState.students.filter((s) => calcRapor(s) > 0).length;
-      document.getElementById("stat-semester").textContent = sc.semester || "Ganjil";
+      document.getElementById("stat-semester").textContent = `Semester ${sc.semester || "Ganjil"}`;
 
+      renderRosterUI();
+      renderStudentChart();
       window.renderStudentTable();
       window.renderAbsensiTable();
       window.renderNilaiTable();
